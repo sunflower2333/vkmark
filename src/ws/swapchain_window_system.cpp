@@ -146,11 +146,12 @@ void SwapchainWindowSystem::init_vulkan(VulkanState& vulkan_)
         vk_acquire_semaphores.push_back(ManagedResource<vk::Semaphore>{
             vulkan->device().createSemaphore(vk::SemaphoreCreateInfo()),
             [this] (auto& s) { vulkan->device().destroySemaphore(s); }});
-        vk_acquire_fences.push_back(ManagedResource<vk::Fence>{
+        vk_submit_fences.push_back(ManagedResource<vk::Fence>{
             vulkan->device().createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)),
             [this] (auto& f) { vulkan->device().destroyFence(f); }});
     }
 
+    vk_image_submissions.resize(vk_images.size());
     current_frame = 0;
 }
 
@@ -158,20 +159,32 @@ void SwapchainWindowSystem::deinit_vulkan()
 {
     vulkan->device().waitIdle();
     vk_acquire_semaphores.clear();
-    vk_acquire_fences.clear();
+    vk_submit_fences.clear();
+    vk_image_submissions.clear();
     vk_swapchain = {};
     vk_surface = {};
 }
 
 VulkanImage SwapchainWindowSystem::next_vulkan_image()
 {
-    (void)vulkan->device().waitForFences(vk_acquire_fences[current_frame].raw, true, INT64_MAX);
-    vulkan->device().resetFences(vk_acquire_fences[current_frame].raw);
+    // Acquire completion only proves that the semaphore was signaled. Reuse
+    // requires the rendering submission that WAITED on it to have completed.
+    auto const submit_fence = vk_submit_fences[current_frame].raw;
+    (void)vulkan->device().waitForFences(submit_fence, true, UINT64_MAX);
 
     auto const image_index = vulkan->device().acquireNextImageKHR(
-        vk_swapchain, UINT64_MAX, vk_acquire_semaphores[current_frame], vk_acquire_fences[current_frame]).value;
+        vk_swapchain, UINT64_MAX, vk_acquire_semaphores[current_frame], {}).value;
 
-    return {image_index, vk_images[image_index], vk_image_format, vk_extent, vk_acquire_semaphores[current_frame], nullptr};
+    // Frame slots and swapchain image indices need not advance together.
+    // Retire the image's prior draw before updating its mapped uniforms or
+    // resetting its command buffer, even if it used a different frame slot.
+    if (vk_image_submissions[image_index])
+        (void)vulkan->device().waitForFences(vk_image_submissions[image_index], true, UINT64_MAX);
+    vulkan->device().resetFences(submit_fence);
+    vk_image_submissions[image_index] = submit_fence;
+
+    return {image_index, vk_images[image_index], vk_image_format, vk_extent,
+            vk_acquire_semaphores[current_frame], submit_fence};
 }
 
 void SwapchainWindowSystem::present_vulkan_image(VulkanImage const& vulkan_image)

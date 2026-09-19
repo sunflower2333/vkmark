@@ -164,7 +164,7 @@ VulkanImage ClearScene::draw(VulkanImage const& image)
 {
     prepare_command_buffer(image);
 
-    vk::PipelineStageFlags mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    vk::PipelineStageFlags mask = vk::PipelineStageFlagBits::eTransfer;
     auto const submit_info = vk::SubmitInfo{}
         .setSignalSemaphoreCount(image.semaphore ? 1 : 0)
         .setPSignalSemaphores(&submit_semaphore.raw)

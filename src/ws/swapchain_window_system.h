@@ -69,7 +69,8 @@ private:
     ManagedResource<vk::SurfaceKHR> vk_surface;
     ManagedResource<vk::SwapchainKHR> vk_swapchain;
     std::vector<ManagedResource<vk::Semaphore>> vk_acquire_semaphores;
-    std::vector<ManagedResource<vk::Fence>> vk_acquire_fences;
+    std::vector<ManagedResource<vk::Fence>> vk_submit_fences;
+    std::vector<vk::Fence> vk_image_submissions;
     std::vector<vk::Image> vk_images;
     vk::Format vk_image_format;
     vk::Extent2D vk_extent;
