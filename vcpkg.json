@@ -1,0 +1,12 @@
+{
+  "name": "vkmark-win32",
+  "version-string": "2025.01",
+  "builtin-baseline": "319504a5326aa870edde46438c5455fa76305a56",
+  "dependencies": [
+    "vulkan-headers",
+    "vulkan-loader",
+    "glm",
+    "assimp",
+    "getopt-win32"
+  ]
+}

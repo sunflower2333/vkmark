@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - work/windows-native-20260920
   pull_request:
     branches:
     - master

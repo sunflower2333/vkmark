@@ -1,0 +1,68 @@
+name: Windows native VkMark
+on:
+  push:
+    branches: [work/windows-native-20260920]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            platform: ARM64
+          - arch: x64
+            platform: x64
+          - arch: x86
+            platform: Win32
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: 319504a5326aa870edde46438c5455fa76305a56
+          path: external/vcpkg
+          fetch-depth: 1
+      - name: Bootstrap pinned dependency builder
+        shell: pwsh
+        run: |
+          ./external/vcpkg/bootstrap-vcpkg.bat -disableMetrics
+          if ($LASTEXITCODE) { throw 'vcpkg bootstrap failed' }
+      - name: Configure and build real benchmark
+        shell: pwsh
+        run: |
+          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-windows
+          if ($LASTEXITCODE) { throw 'Configure failed' }
+          cmake --build build --config Release --parallel 4
+          if ($LASTEXITCODE) { throw 'Compile failed' }
+          cmake --install build --config Release --prefix package
+          if ($LASTEXITCODE) { throw 'Install staging failed' }
+      - name: Parse ordinary command line on compatible runner architectures
+        if: matrix.arch != 'arm64'
+        shell: pwsh
+        run: |
+          ./build/Release/vkmark.exe --help
+          if ($LASTEXITCODE) { throw 'Application startup/options smoke failed' }
+      - name: Package application dependencies without a private Vulkan loader
+        shell: pwsh
+        run: |
+          Get-ChildItem build/Release/*.dll | Where-Object Name -ne 'vulkan-1.dll' | Copy-Item -Destination package
+          if (Test-Path package/vulkan-1.dll) { throw 'Use the target system Vulkan loader' }
+          Copy-Item COPYING*,README* -Destination package
+          $files = @(Get-ChildItem package -File -Recurse | ForEach-Object {
+            @{path=[IO.Path]::GetRelativePath((Resolve-Path package), $_.FullName);sha256=(Get-FileHash $_.FullName).Hash.ToLowerInvariant()}
+          })
+          @{source=$env:GITHUB_SHA;architecture='${{ matrix.arch }}';run=$env:GITHUB_RUN_ID;files=$files;runtime_tested=$false} | ConvertTo-Json -Depth 5 | Set-Content package/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vkmark-windows-${{ matrix.arch }}
+          path: package
+          if-no-files-found: error

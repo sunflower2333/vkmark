@@ -22,7 +22,7 @@
 
 #include <sstream>
 #include <fstream>
-#include <sys/time.h>
+#include <chrono>
 
 #include "util.h"
 #include <stdexcept>
@@ -57,11 +57,8 @@ std::vector<std::string> Util::split(std::string const& src, char delim)
 
 uint64_t Util::get_timestamp_us()
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t const now = static_cast<uint64_t>(ts.tv_sec) * 1000000 +
-                         static_cast<uint64_t>(ts.tv_nsec) / 1000;
-    return now;
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 void Util::set_data_dir(std::string const& dir)

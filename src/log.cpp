@@ -23,7 +23,13 @@
 
 #include "log.h"
 
+#ifdef _WIN32
+#include <io.h>
+#define isatty _isatty
+#define fileno _fileno
+#else
 #include <unistd.h>
+#endif
 #include <cstdio>
 #include <cstdarg>
 #include <string>
