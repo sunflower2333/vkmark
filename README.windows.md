@@ -8,7 +8,7 @@ runtime. No private driver is packaged. Linux continues to use Meson/plugins.
 Build with MSVC and the pinned vcpkg toolchain:
 
 ```
-cmake -S . -B build -A ARM64 -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=arm64-windows
+cmake -S . -B build -A ARM64 "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=arm64-windows"
 cmake --build build --config Release
 cmake --install build --config Release --prefix package
 ```

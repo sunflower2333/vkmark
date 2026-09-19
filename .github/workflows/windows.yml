@@ -39,7 +39,8 @@ jobs:
       - name: Configure and build real benchmark
         shell: pwsh
         run: |
-          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-windows
+          $toolchain = (Resolve-Path external/vcpkg/scripts/buildsystems/vcpkg.cmake).Path
+          cmake -S . -B build -A ${{ matrix.platform }} "-DCMAKE_TOOLCHAIN_FILE=$toolchain" "-DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-windows"
           if ($LASTEXITCODE) { throw 'Configure failed' }
           cmake --build build --config Release --parallel 4
           if ($LASTEXITCODE) { throw 'Compile failed' }
