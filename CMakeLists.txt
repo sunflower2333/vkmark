@@ -38,7 +38,7 @@ add_executable(vkmark
     src/scenes/texture_scene.cpp src/scenes/vertex_scene.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/format_map_gen.h")
 target_include_directories(vkmark PRIVATE src "${CMAKE_CURRENT_BINARY_DIR}")
-target_compile_definitions(vkmark PRIVATE VK_USE_PLATFORM_WIN32_KHR NOMINMAX
+target_compile_definitions(vkmark PRIVATE VK_USE_PLATFORM_WIN32_KHR NOMINMAX UNICODE _UNICODE
     WIN32_LEAN_AND_MEAN _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS
     VKMARK_VERSION_STR="${PROJECT_VERSION}" VKMARK_DATA_DIR="data"
     VKMARK_WINDOW_SYSTEM_DIR="builtin")
