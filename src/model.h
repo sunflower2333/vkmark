@@ -23,6 +23,8 @@
 #pragma once
 
 #include <memory>
+#include <cstddef>
+#include <vector>
 
 #include <assimp/Importer.hpp>
 #include <vulkan/vulkan.hpp>
@@ -41,10 +43,10 @@ public:
     ModelAttribMap& with_other(vk::Format format);
 
     std::vector<vk::Format> formats;
-    ssize_t position;
-    ssize_t color;
-    ssize_t normal;
-    ssize_t texcoord;
+    std::ptrdiff_t position;
+    std::ptrdiff_t color;
+    std::ptrdiff_t normal;
+    std::ptrdiff_t texcoord;
 };
 
 class Model

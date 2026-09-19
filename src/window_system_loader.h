@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <functional>
+#include <string>
 
 struct Options;
 class WindowSystem;
